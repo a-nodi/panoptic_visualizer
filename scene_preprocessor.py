@@ -18,9 +18,5 @@ class ScenePreprocessor:
     
         return coord_format
     
-    @staticmethod
-    def accumulate_voxel():
-
-    
-    
-    
+    # @staticmethod
+    # def accumulate_voxel():
