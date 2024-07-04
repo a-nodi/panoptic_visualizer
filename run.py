@@ -1,8 +1,13 @@
+import numpy as np
 import yaml
+import torch
 import argparse
+
 from loader import Loader
+from utils import unzip
 from scene_preprocessor import ScenePreprocessor
 from visualizer import Visualizer
+
 
 def main(loader_configs, preprocess_configs, visualizer_configs, verbose=False):
     
@@ -25,13 +30,40 @@ def main(loader_configs, preprocess_configs, visualizer_configs, verbose=False):
     # Initialize visualizer
     visualizer = Visualizer(configs=visualizer_configs)
 
-    coord_format = ScenePreprocessor.get_coordinate_format(
-        dimension=preprocess_configs["dimension"],
-        voxel_size=preprocess_configs["voxel_size"]
-    )
+    voxel_size = preprocess_configs["voxel_size"]
 
+    trajectory = []
     
+    for i, scene_data in enumerate(loader):
+        print(f"{i}th scene data preprocessing...")
+        if i >= loader_configs["nframe"]:
+            break
+        
+        coords, labels = [torch.tensor(coord) for coord in scene_data["pcd"]], [torch.tensor(label) for label in scene_data["labels"]]
+        coords, labels = unzip([ScenePreprocessor.filter_out_scene(coord, label) for coord, label in zip(coords, labels)])
+        labels = [ScenePreprocessor.one_hot_encode(label) for label in labels]
+        accumulated_coords, accumulated_labels = ScenePreprocessor.accumulate_voxel(coords, labels, voxel_size)
+        
+        intrinsic = scene_data["camera_intrinsic"][0]
+        camera_poses = scene_data["camera_extrinsic"]
+        
+        trajectory_element = ScenePreprocessor.create_trajectory(
+            sequence_of_coords=accumulated_coords,
+            sequence_of_labels=accumulated_labels,
+            sequence_of_camera_pose=camera_poses,
+            intrinsic=intrinsic,
+            visualization_type=visualizer_configs["camera_view"],
+            height=visualizer_configs["BEV_height"]
+        )
+
+        trajectory.append(trajectory_element)
     
+    print("Wrapping up scenes...")
+    wraped_up_scenes = visualizer.wrapup_scenes(trajectory, voxel_size)
+    
+    print("Visualizing scenes...")
+    visualizer.visualize(wraped_up_scenes, voxel_size)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Visualize panoptic segmentation results")
     parser.add_argument("--verbose", type=bool, default=True, help="Whether to print debug information")

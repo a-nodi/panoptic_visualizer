@@ -63,7 +63,7 @@ class Loader:
         
         # Get camera pose and intrinsic
         self.list_of_camera_calibrated_sensor = [self.nusc.get('calibrated_sensor', camera_data['calibrated_sensor_token']) for camera_data in self.list_of_camera_data]
-        self.list_of_camera_intrinsic = [camera_calibrated_sensor['camera_intrinsic'] for camera_calibrated_sensor in self.list_of_camera_calibrated_sensor]
+        self.list_of_camera_intrinsic = [np.array(camera_calibrated_sensor['camera_intrinsic']) for camera_calibrated_sensor in self.list_of_camera_calibrated_sensor]
         self.list_of_camera_rotation = [camera_calibrated_sensor['rotation'] for camera_calibrated_sensor in self.list_of_camera_calibrated_sensor]
         self.list_of_camera_translation = [camera_calibrated_sensor['translation'] for camera_calibrated_sensor in self.list_of_camera_calibrated_sensor]
         self.list_of_camera_extrinsic = [Loader.make_extrinsic_matrix(rotation, translation) for rotation, translation in zip(self.list_of_camera_rotation, self.list_of_camera_translation)]
@@ -149,7 +149,7 @@ class Loader:
         
         return {
             "pcd": list_of_pcd,
-            "label": list_of_label,
+            "labels": list_of_label,
             "camera_intrinsic": list_of_camera_intrinsic,
             "camera_extrinsic": list_of_camera_extrinsic,
             "lidar_extrinsic": list_of_lidar_extrinsic,
