@@ -53,7 +53,7 @@ class ScenePreprocessor:
     
     @staticmethod
     def transform_to_fpv_pose(extrinsic, height):
-        extrinsic = np.linalg.inv(extrinsic)
+        # extrinsic = np.linalg.inv(extrinsic)
                 
         """
         extrinsic[:3, :3] = np.array(  # OpenGL convention: flip y and z axis
@@ -83,7 +83,7 @@ class ScenePreprocessor:
     
     @staticmethod
     def transform_to_bev_pose(extrinsic, height):
-        extrinsic = np.linalg.inv(extrinsic)
+        # extrinsic = np.linalg.inv(extrinsic)
         
         # Set view to bird eye view
         extrinsic[:3, :3] = np.array(
@@ -98,8 +98,8 @@ class ScenePreprocessor:
         return extrinsic
     
     @staticmethod
-    def create_trajectory(sequence_of_coords, sequence_of_labels, sequence_of_camera_pose, intrinsic, height, visualization_type):
-        trajectory = []
+    def create_trajectory(coord, label, extrinsic, intrinsic, height, visualization_type):
+        
         
         if visualization_type == "FPV":
             transform_pose = ScenePreprocessor.transform_to_fpv_pose
@@ -108,16 +108,15 @@ class ScenePreprocessor:
         else:
             raise ValueError(f"Invalid visualization type: {visualization_type}")
         
-        for coord, label, extrinsic in zip(sequence_of_coords, sequence_of_labels, sequence_of_camera_pose):
-            extrinsic = transform_pose(extrinsic, height)
-            trajectory.append(
-                {
-                    "coord": coord,
-                    "label": label,
-                    "extrinsic": extrinsic,
-                    "intrinsic": intrinsic
-                }
-            )
+        extrinsic = transform_pose(extrinsic, height)
+        
+        trajectory = {
+            "coord": coord,
+            "label": label,
+            "extrinsic": extrinsic,
+            "intrinsic": intrinsic
+        }
+        
         
         return trajectory
     
