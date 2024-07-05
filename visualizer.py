@@ -50,6 +50,7 @@ class Visualizer:
                 cx=trajectory_element["intrinsic"][0, 2],
                 cy=trajectory_element["intrinsic"][1, 2]
             )
+            parameter.extrinsic = trajectory_element["extrinsic"]
             
             # Wrap up to Open3D geometry        
             pcd = o3d.geometry.PointCloud()
@@ -73,7 +74,6 @@ class Visualizer:
         # opt = vis.get_render_option()
         # opt.background_color = np.asarray([0, 0, 0])
         ctr = vis.get_view_control()
-        
         sequence_of_image = []
         
         # Video fream size
@@ -98,6 +98,10 @@ class Visualizer:
                         allow_arbitrary=True
                 )
                 """
+                
+                _extrinsic = ctr.convert_to_pinhole_camera_parameters().extrinsic
+                extrinsic = scene["parameter"].extrinsic
+                
                 vis.poll_events()
                 vis.update_renderer()
                 
