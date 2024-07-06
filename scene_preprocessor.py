@@ -56,13 +56,17 @@ class ScenePreprocessor:
         ) @ extrinsic[:3, :3]
         """
         
-        extrinsic[:3, :3] = np.array(
+        extrinsic[:3, :3] = np.array(  # OpenGL convention: flip y and z axis
+            [[1, 0, 0],
+            [0, -1, 0],
+            [0, 0, -1]]
+        ) @ np.array(  # camera pose correction
             [[0, -1, 0],
-            [0, 0, -1],
-            [1, 0, 0]]
+            [1, 0, 0],
+            [0, 0, 1]]
         ) @ extrinsic[:3, :3]
         
-        extrinsic[0, 3], extrinsic[1, 3], extrinsic[2, 3] = -extrinsic[1, 3], -extrinsic[2, 3], extrinsic[0, 3]  # Reset axis            
+        # extrinsic[0, 3], extrinsic[1, 3], extrinsic[2, 3] = -extrinsic[1, 3], -extrinsic[2, 3], extrinsic[0, 3]  # Reset axis            
         
         return extrinsic
     
@@ -75,7 +79,7 @@ class ScenePreprocessor:
             [[1, 0, 0],
             [0, -1, 0],
             [0, 0, -1]]
-        ) @ extrinsic[:3, :3]
+        )
         
         extrinsic[1, 3] = -extrinsic[1, 3]
         extrinsic[2, 3] = height  # Set height

@@ -38,34 +38,36 @@ class Visualizer:
 
     def wrapup_scenes(self, sequence_of_scenes, voxel_size):
         wraped_trajectory = []
-        
-        for trajectory_element in sequence_of_scenes:
-            # Wrap up to Open3D camera parameters
-            parameter = o3d.camera.PinholeCameraParameters()
-            parameter.intrinsic.set_intrinsics(
-                width=self.configs["resolution"][0],
-                height=self.configs["resolution"][1],
-                fx=trajectory_element["intrinsic"][0, 0],
-                fy=trajectory_element["intrinsic"][1, 1],
-                cx=trajectory_element["intrinsic"][0, 2],
-                cy=trajectory_element["intrinsic"][1, 2]
-            )
-            parameter.extrinsic = trajectory_element["extrinsic"]
-            
-            # Wrap up to Open3D geometry        
-            pcd = o3d.geometry.PointCloud()
-            pcd.points = o3d.utility.Vector3dVector(trajectory_element["coord"])
-            pcd.colors = o3d.utility.Vector3dVector(self.color_map[trajectory_element["label"]])
-            
-            voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(pcd, 0.95 * voxel_size)
-            
-            wraped_trajectory.append(
-                {
-                    "voxel_grid": voxel_grid,
-                    "parameter": parameter    
-                }
-            )
-            
+        with tqdm(sequence_of_scenes, disable=not self.verbose) as pbar:
+            pbar.set_description("Wrapping up scenes")
+            for trajectory_element in sequence_of_scenes:
+                # Wrap up to Open3D camera parameters
+                parameter = o3d.camera.PinholeCameraParameters()
+                parameter.intrinsic.set_intrinsics(
+                    width=self.configs["resolution"][0],
+                    height=self.configs["resolution"][1],
+                    fx=trajectory_element["intrinsic"][0, 0],
+                    fy=trajectory_element["intrinsic"][1, 1],
+                    cx=trajectory_element["intrinsic"][0, 2],
+                    cy=trajectory_element["intrinsic"][1, 2]
+                )
+                
+                parameter.extrinsic = np.copy(trajectory_element["extrinsic"])
+                
+                # Wrap up to Open3D geometry        
+                pcd = o3d.geometry.PointCloud()
+                pcd.points = o3d.utility.Vector3dVector(trajectory_element["coord"])
+                pcd.colors = o3d.utility.Vector3dVector(self.color_map[trajectory_element["label"]])
+                
+                voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(pcd, voxel_size)
+                
+                wraped_trajectory.append(
+                    {
+                        "voxel_grid": voxel_grid,
+                        "parameter": parameter    
+                    }
+                )
+                
         return wraped_trajectory
     
     def visualize(self, wraped_up_scenes, voxel_size):
@@ -92,16 +94,14 @@ class Visualizer:
                 vis.clear_geometries()
                 vis.add_geometry(scene["voxel_grid"])
 
-                """
+                
                 ctr.convert_from_pinhole_camera_parameters(
                         scene["parameter"],
                         allow_arbitrary=True
                 )
-                """
                 
                 _extrinsic = ctr.convert_to_pinhole_camera_parameters().extrinsic
-                extrinsic = scene["parameter"].extrinsic
-                
+                extrinsic = np.copy(scene["parameter"].extrinsic)
                 vis.poll_events()
                 vis.update_renderer()
                 

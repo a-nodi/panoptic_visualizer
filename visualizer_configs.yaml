@@ -3,5 +3,5 @@ fps: 5
 output_path: ./panoptic_visualizer/outputs
 output_codec: mp4v
 output_name: test.mp4
-camera_view: BEV
+camera_view: FPV
 BEV_height: 50

@@ -44,8 +44,8 @@ def main(loader_configs, preprocess_configs, visualizer_configs, verbose=False):
             labels = [ScenePreprocessor.one_hot_encode(label) for label in labels]
             accumulated_coords, accumulated_labels = ScenePreprocessor.accumulate_voxel(coords, labels, voxel_size)
             accumulated_coords = accumulated_coords.astype(np.float64)
-            # intrinsic = scene_data["camera_intrinsic"][0]
-            intrinsic = visualizer.get_custom_instrinsic(visualizer_configs["resolution"])
+            intrinsic = scene_data["camera_intrinsic"][0]
+            # intrinsic = visualizer.get_custom_instrinsic(visualizer_configs["resolution"])
             camera_poses = scene_data["camera_extrinsic"]
             
             trajectory_element = ScenePreprocessor.create_trajectory(
@@ -59,10 +59,7 @@ def main(loader_configs, preprocess_configs, visualizer_configs, verbose=False):
 
             trajectory.append(trajectory_element)
     
-    print("Wrapping up scenes...")
     wraped_up_scenes = visualizer.wrapup_scenes(trajectory, voxel_size)
-    
-    print("Visualizing scenes...")
     visualizer.visualize(wraped_up_scenes, voxel_size)
 
 if __name__ == "__main__":
