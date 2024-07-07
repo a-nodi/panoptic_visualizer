@@ -40,16 +40,14 @@ class Visualizer:
         wraped_trajectory = []
         with tqdm(sequence_of_scenes, disable=not self.verbose) as pbar:
             pbar.set_description("Wrapping up scenes")
-            for trajectory_element in sequence_of_scenes:
+            for trajectory_element in pbar:
                 # Wrap up to Open3D camera parameters
                 parameter = o3d.camera.PinholeCameraParameters()
-                parameter.intrinsic.set_intrinsics(
+                
+                parameter.intrinsic = o3d.camera.PinholeCameraIntrinsic(
                     width=self.configs["resolution"][0],
                     height=self.configs["resolution"][1],
-                    fx=trajectory_element["intrinsic"][0, 0],
-                    fy=trajectory_element["intrinsic"][1, 1],
-                    cx=trajectory_element["intrinsic"][0, 2],
-                    cy=trajectory_element["intrinsic"][1, 2]
+                    intrinsic_matrix=trajectory_element["intrinsic"]
                 )
                 
                 parameter.extrinsic = np.copy(trajectory_element["extrinsic"])
@@ -59,7 +57,7 @@ class Visualizer:
                 pcd.points = o3d.utility.Vector3dVector(trajectory_element["coord"])
                 pcd.colors = o3d.utility.Vector3dVector(self.color_map[trajectory_element["label"]])
                 
-                voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(pcd, voxel_size)
+                voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(pcd, 0.95 * voxel_size)
                 
                 wraped_trajectory.append(
                     {
@@ -87,29 +85,27 @@ class Visualizer:
         )   
         
         # Render images from the scenes
-        with tqdm(range(0, len(wraped_up_scenes)), disable=not self.verbose) as pbar:
+        with tqdm(wraped_up_scenes, disable=not self.verbose) as pbar:
             pbar.set_description("Rendering scenes")
-            for scene in wraped_up_scenes:
-                
+            for scene in pbar:
+                # Load voxel grid
                 vis.clear_geometries()
                 vis.add_geometry(scene["voxel_grid"])
-
                 
+                # Set camera parameters
                 ctr.convert_from_pinhole_camera_parameters(
                         scene["parameter"],
                         allow_arbitrary=True
                 )
                 
-                _extrinsic = ctr.convert_to_pinhole_camera_parameters().extrinsic
-                extrinsic = np.copy(scene["parameter"].extrinsic)
                 vis.poll_events()
                 vis.update_renderer()
                 
                 image = vis.capture_screen_float_buffer(do_render=True)
                 image = (255 * np.asarray(image)).astype(np.uint8)
+                
                 sequence_of_image.append(image)
                 out.write(image)
-                pbar.update(1)
 
         vis.destroy_window()
         out.release()

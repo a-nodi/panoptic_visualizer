@@ -44,8 +44,11 @@ def main(loader_configs, preprocess_configs, visualizer_configs, verbose=False):
             labels = [ScenePreprocessor.one_hot_encode(label) for label in labels]
             accumulated_coords, accumulated_labels = ScenePreprocessor.accumulate_voxel(coords, labels, voxel_size)
             accumulated_coords = accumulated_coords.astype(np.float64)
+            
+            tracking_boxes = scene_data["tracking_boxes"]
+            tracking_ids = ScenePreprocessor.get_tracking_ids(accumulated_coords, tracking_boxes)
+            
             intrinsic = scene_data["camera_intrinsic"][0]
-            # intrinsic = visualizer.get_custom_instrinsic(visualizer_configs["resolution"])
             camera_poses = scene_data["camera_extrinsic"]
             
             trajectory_element = ScenePreprocessor.create_trajectory(
@@ -53,6 +56,7 @@ def main(loader_configs, preprocess_configs, visualizer_configs, verbose=False):
                 label=accumulated_labels,
                 extrinsic=camera_poses[0],
                 intrinsic=intrinsic,
+                tracking_ids=tracking_ids,
                 visualization_type=visualizer_configs["camera_view"],
                 height=visualizer_configs["BEV_height"]
             )
@@ -65,9 +69,9 @@ def main(loader_configs, preprocess_configs, visualizer_configs, verbose=False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Visualize panoptic segmentation results")
     parser.add_argument("--verbose", type=bool, default=True, help="Whether to print debug information")
-    parser.add_argument("--loader_config_path", type=str, default="./panoptic_visualizer/loader_configs.yaml", help="Path to the loader config file")
-    parser.add_argument("--preprocess_config_path", type=str, default="./panoptic_visualizer/preprocess_configs.yaml", help="Path to the preprocess config file")
-    parser.add_argument("--visualizer_config_path", type=str, default="./panoptic_visualizer/visualizer_configs.yaml", help="Path to the visualizer config file")
+    parser.add_argument("--loader_config_path", type=str, default="/root/panoptic_visualizer/configs/loader_configs.yaml", help="Path to the loader config file")
+    parser.add_argument("--preprocess_config_path", type=str, default="/root/panoptic_visualizer/configs/preprocess_configs.yaml", help="Path to the preprocess config file")
+    parser.add_argument("--visualizer_config_path", type=str, default="/root/panoptic_visualizer/configs/visualizer_configs.yaml", help="Path to the visualizer config file")
     args = parser.parse_args()
     
     verbose = args.verbose

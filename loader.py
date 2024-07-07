@@ -5,7 +5,7 @@ from nuscenes import NuScenes
 from nuscenes.eval.common.loaders import load_prediction, load_gt
 from nuscenes.eval.tracking.data_classes import TrackingConfig, TrackingBox
 from nuscenes.utils.data_classes import LidarSegPointCloud
-
+from utils import convert_quaternion_to_rotation_matrix
 
 class Loader:
     # TODO: Make it work when is_gt is False
@@ -87,31 +87,12 @@ class Loader:
         Returns:
             4x4 extrinsic matrix.
         """
-        rotation = Loader.convert_quaternion_to_rotation_matrix(rotation)        
+        rotation = convert_quaternion_to_rotation_matrix(rotation)        
         extrinsic = np.eye(4)
         extrinsic[:3, :3] = rotation
         extrinsic[:3, 3] = translation
         
         return extrinsic
-    
-    @staticmethod
-    def convert_quaternion_to_rotation_matrix(quaternion):
-        """
-        Convert quaternion to rotation matrix.
-        Args:
-            quaternion: 4x1 quaternion.
-        Returns:
-            3x3 rotation matrix.
-        """
-        
-        x, y, z, w = quaternion
-        rotation = np.array([
-            [1 - 2*y**2 - 2*z**2, 2*x*y - 2*z*w, 2*x*z + 2*y*w],
-            [2*x*y + 2*z*w, 1 - 2*x**2 - 2*z**2, 2*y*z - 2*x*w],
-            [2*x*z - 2*y*w, 2*y*z + 2*x*w, 1 - 2*x**2 - 2*y**2]
-        ])
-        
-        return rotation
     
     @staticmethod
     def load_lidar(pcd_path, label_path):
@@ -126,6 +107,7 @@ class Loader:
         list_of_camera_intrinsic = []
         list_of_camera_extrinsic = []
         list_of_lidar_extrinsic = []
+        list_of_tracking_boxes = []
         
         if idx >= len(self.sample_tokens):
             raise IndexError("Index out of range")
@@ -146,13 +128,14 @@ class Loader:
             list_of_camera_intrinsic.append(self.list_of_camera_intrinsic[idx + i])
             list_of_camera_extrinsic.append(self.list_of_camera_extrinsic[idx + i])
             list_of_lidar_extrinsic.append(self.list_of_lidar_extrinsic[idx + i])
-        
+            list_of_tracking_boxes.append(self.tracking_boxes[self.sample_tokens[idx + i]])
+            
         return {
             "pcd": list_of_pcd,
             "labels": list_of_label,
             "camera_intrinsic": list_of_camera_intrinsic,
             "camera_extrinsic": list_of_camera_extrinsic,
             "lidar_extrinsic": list_of_lidar_extrinsic,
-            "tracking_boxes": self.tracking_boxes
+            "tracking_boxes": list_of_tracking_boxes
         }
 
