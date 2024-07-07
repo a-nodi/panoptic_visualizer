@@ -1,8 +1,8 @@
 version: v1.0-trainval
-dataroot: ./data/nuScenes
+dataroot: /root/data/nuScenes
 map_resolution: 0.1
 is_gt: true
 eval_split: train_track
-tracking_config_path: ./panoptic_visualizer/configs/tracking_nips_2019.json
+tracking_config_path: /root/panoptic_visualizer/configs/tracking_nips_2019.json
 nsample_per_frame: 5
 nframe: 50
